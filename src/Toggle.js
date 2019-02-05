@@ -8,6 +8,12 @@ class Toggle extends React.Component {
     initialOn: false,
     onReset: () => {},
   };
+
+  static stateChangeTypes = {
+    reset: '__reset__',
+    toggle: '__toggle__',
+  };
+
   initialState = { on: this.props.initialOn };
   state = this.initialState;
 
@@ -15,15 +21,18 @@ class Toggle extends React.Component {
     this.setState(state => {
       const changesObject =
         typeof changes === 'function' ? changes(state) : changes;
+
       const reducedChanges = this.props.stateReducer(state, changesObject);
 
-      return reducedChanges;
+      const { type: ignoredType, ...onlyChanges } = reducedChanges;
+
+      return onlyChanges;
     }, callback);
   }
 
-  toggle = () => {
+  toggle = ({ type = Toggle.stateChangeTypes.toggle } = {}) => {
     this.internalSetState(
-      ({ on }) => ({ on: !on }),
+      ({ on }) => ({ on: !on, type }),
       () => {
         this.props.onToggle(this.state.on);
       }
@@ -31,14 +40,15 @@ class Toggle extends React.Component {
   };
 
   reset = () => {
-    this.internalSetState(this.initialState, () =>
-      this.props.onReset(this.state.on)
+    this.internalSetState(
+      { ...this.initialState, type: Toggle.stateChangeTypes.reset },
+      () => this.props.onReset(this.state.on)
     );
   };
 
   getTogglerProps = ({ onClick, ...props }) => {
     return {
-      onClick: callAll(onClick, this.toggle),
+      onClick: callAll(onClick, () => this.toggle()),
       'aria-pressed': this.state.on,
       ...props,
     };
@@ -78,6 +88,10 @@ class Usage extends React.Component {
   };
 
   toggleStateReducer = (state, changes) => {
+    if (changes.type === Toggle.stateChangeTypes.toggle) {
+      return changes;
+    }
+
     if (this.state.timesClicked >= 4) {
       return { ...changes, on: false };
     }
@@ -97,7 +111,14 @@ class Usage extends React.Component {
           <div>
             <Switch {...getTogglerProps({ on })} />
             {timesClicked > 4 ? (
-              <div>Whoa, you clicked too much!</div>
+              <div>
+                Whoa, you clicked too much!
+                <br />
+                <button onClick={() => toggle({ type: 'forced' })}>
+                  Force toggle
+                </button>
+                <br />
+              </div>
             ) : timesClicked > 0 ? (
               <div> click count: {timesClicked}</div>
             ) : null}
