@@ -52,22 +52,34 @@ class Toggle extends React.Component {
   };
 
   render() {
-    return (
-      <ToggleContext.Provider value={this.state}>
-        {this.props.children}
-      </ToggleContext.Provider>
-    );
+    return this.props.children({
+      on: this.state.on,
+      toggle: this.toggle,
+    });
   }
+}
+
+function CommonToggle(props) {
+  return (
+    <Toggle {...props}>
+      {({ on, toggle }) => <Switch on={on} onClick={toggle} />}
+    </Toggle>
+  );
 }
 
 function Usage({ onToggle = (...args) => console.log('onToggle', ...args) }) {
   return (
     <Toggle onToggle={onToggle}>
-      <Toggle.On>The button is on</Toggle.On>
-      <Toggle.Off>The button is off</Toggle.Off>
-      <div>
-        <Toggle.Button />
-      </div>
+      {({ on, toggle }) => (
+        <div>
+          {on ? 'The b utton is on' : 'The button is off'}
+          <Switch on={on} onClick={toggle} />
+          <hr />
+          <button area-label="custom-button" onClick={toggle}>
+            {on ? 'on' : 'off'}
+          </button>
+        </div>
+      )}
     </Toggle>
   );
 }
