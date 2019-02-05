@@ -21,7 +21,7 @@ function ToggleConsumer(props) {
 class Toggle extends React.Component {
   static On = ({ children }) => (
     <ToggleConsumer>
-      {({ contextValue }) => (contextValue.on ? children : null)}
+      {contextValue => (contextValue.on ? children : null)}
     </ToggleConsumer>
   );
   static Off = ({ children }) => (
@@ -37,10 +37,6 @@ class Toggle extends React.Component {
     </ToggleConsumer>
   );
 
-  state = {
-    on: false,
-  };
-
   toggle = () => {
     this.setState(
       ({ on }) => ({ on: !on }),
@@ -50,14 +46,14 @@ class Toggle extends React.Component {
     );
   };
 
+  state = {
+    on: false,
+    toggle: this.toggle,
+  };
+
   render() {
     return (
-      <ToggleContext.Provider
-        value={{
-          on: this.state.on,
-          toggle: this.toggle,
-        }}
-      >
+      <ToggleContext.Provider value={this.state}>
         {this.props.children}
       </ToggleContext.Provider>
     );
@@ -66,13 +62,13 @@ class Toggle extends React.Component {
 
 function Usage({ onToggle = (...args) => console.log('onToggle', ...args) }) {
   return (
-    <div onToggle={onToggle}>
+    <Toggle onToggle={onToggle}>
       <Toggle.On>The button is on</Toggle.On>
       <Toggle.Off>The button is off</Toggle.Off>
       <div>
         <Toggle.Button />
       </div>
-    </div>
+    </Toggle>
   );
 }
 
