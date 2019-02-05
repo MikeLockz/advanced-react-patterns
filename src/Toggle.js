@@ -19,23 +19,9 @@ function ToggleConsumer(props) {
 }
 
 class Toggle extends React.Component {
-  static On = ({ children }) => (
-    <ToggleConsumer>
-      {contextValue => (contextValue.on ? children : null)}
-    </ToggleConsumer>
-  );
-  static Off = ({ children }) => (
-    <ToggleConsumer>
-      {contextValue => (contextValue.on ? null : children)}
-    </ToggleConsumer>
-  );
-  static Button = ({ ...props }) => (
-    <ToggleConsumer>
-      {contextValue => (
-        <Switch on={contextValue.on} onClick={contextValue.toggle} {...props} />
-      )}
-    </ToggleConsumer>
-  );
+  state = {
+    on: false,
+  };
 
   toggle = () => {
     this.setState(
@@ -46,36 +32,36 @@ class Toggle extends React.Component {
     );
   };
 
-  state = {
-    on: false,
-    toggle: this.toggle,
-  };
-
-  render() {
-    return this.props.children({
+  getStateAndHelpers() {
+    return {
       on: this.state.on,
       toggle: this.toggle,
-    });
+      togglerProps: {
+        onClick: this.toggle,
+        'aria-pressed': this.state.on,
+      },
+    };
   }
-}
 
-function CommonToggle(props) {
-  return (
-    <Toggle {...props}>
-      {({ on, toggle }) => <Switch on={on} onClick={toggle} />}
-    </Toggle>
-  );
+  render() {
+    return this.props.children(
+      this.getStateAndHelpers({
+        on: this.state.on,
+        toggle: this.toggle,
+      })
+    );
+  }
 }
 
 function Usage({ onToggle = (...args) => console.log('onToggle', ...args) }) {
   return (
     <Toggle onToggle={onToggle}>
-      {({ on, toggle }) => (
+      {({ on, togglerProps }) => (
         <div>
           {on ? 'The b utton is on' : 'The button is off'}
-          <Switch on={on} onClick={toggle} />
+          <Switch on={on} {...togglerProps} />
           <hr />
-          <button area-label="custom-button" onClick={toggle}>
+          <button area-label="custom-button" {...togglerProps}>
             {on ? 'on' : 'off'}
           </button>
         </div>
