@@ -1,27 +1,15 @@
 import React from 'react';
 import { Switch } from './Switch';
 
-const ToggleContext = React.createContext();
-
-function ToggleConsumer(props) {
-  return (
-    <ToggleContext.Consumer>
-      {context => {
-        if (!context) {
-          throw new Error(
-            'Toggle compond components must be rendered within a Provider component.'
-          );
-        }
-        return props.children(context);
-      }}
-    </ToggleContext.Consumer>
-  );
-}
+const callAll = (...fns) => (...args) => fns.forEach(fn => fn && fn(...args));
 
 class Toggle extends React.Component {
-  state = {
-    on: false,
+  static defaultProps = {
+    initialOn: false,
+    onReset: () => {},
   };
+  initialState = { on: this.props.initialOn };
+  state = this.initialState;
 
   toggle = () => {
     this.setState(
@@ -32,14 +20,24 @@ class Toggle extends React.Component {
     );
   };
 
+  reset = () => {
+    this.setState(this.initialState, () => this.props.onReset(this.state.on));
+  };
+
+  getTogglerProps = ({ onClick, ...props }) => {
+    return {
+      onClick: callAll(onClick, this.toggle),
+      'aria-pressed': this.state.on,
+      ...props,
+    };
+  };
+
   getStateAndHelpers() {
     return {
       on: this.state.on,
       toggle: this.toggle,
-      togglerProps: {
-        onClick: this.toggle,
-        'aria-pressed': this.state.on,
-      },
+      getTogglerProps: this.getTogglerProps,
+      reset: this.reset,
     };
   }
 
@@ -53,17 +51,18 @@ class Toggle extends React.Component {
   }
 }
 
-function Usage({ onToggle = (...args) => console.log('onToggle', ...args) }) {
+function Usage({
+  initialOn = true,
+  onToggle = (...args) => console.log('onToggle', ...args),
+  onReset = (...args) => console.log('onReset', ...args),
+}) {
   return (
-    <Toggle onToggle={onToggle}>
-      {({ on, togglerProps }) => (
+    <Toggle onToggle={onToggle} initialOn={initialOn} onReset={onReset}>
+      {({ getTogglerProps, on, reset }) => (
         <div>
-          {on ? 'The b utton is on' : 'The button is off'}
-          <Switch on={on} {...togglerProps} />
+          <Switch {...getTogglerProps({ on })} />
           <hr />
-          <button area-label="custom-button" {...togglerProps}>
-            {on ? 'on' : 'off'}
-          </button>
+          <button onClick={reset}>Reset</button>
         </div>
       )}
     </Toggle>
